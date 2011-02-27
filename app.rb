@@ -23,18 +23,28 @@ get '/' do
   erb :index
 end
 
+get '/search' do
+  puts "Searching for #{params[:url]}"
+  content_type 'text/json', :charset => 'utf-8'
+  url = DB['urls'].find_one({:url => params[:url].downcase})
+  tweets = url['users'].collect{|u|
+    {:screen_name => u['screen_name'], :link => u['link']}
+  } rescue []
+  tweets.to_json
+end
+
 def unshorten(tweet)
   tweet['entities']['urls'].each do |data|
     if data['expanded_url']
       url = URI.parse data['expanded_url']
-      DB['urls'].update({:url => url.to_s}, {"$addToSet" => {"users" => {
+      DB['urls'].update({:url => url.to_s.downcase}, {"$addToSet" => {"users" => {
         "short_url" => data['url'],
         "screen_name" => tweet['user']['screen_name'],
         "user_id" => tweet['user']['id'],
         "status_id" => tweet['id'],
         "link" => "http://twitter.com/#!/#{tweet['user']['screen_name']}/status/#{tweet['id']}"
       }}}, :upsert => true)
-      DB['domains'].update({:domain => url.host}, {"$addToSet" => {"users" => {
+      DB['domains'].update({:domain => url.host.downcase}, {"$addToSet" => {"users" => {
         "short_url" => data['url'],
         "screen_name" => tweet['user']['screen_name'],
         "user_id" => tweet['user']['id'],
@@ -49,14 +59,14 @@ def unshorten(tweet)
         resp = JSON.parse(http.response)
         if resp['success'] == "true"
           url = URI.parse resp['resolvedURL']
-          DB['urls'].update({:url => url.to_s}, {"$addToSet" => {"users" => {
+          DB['urls'].update({:url => url.to_s.downcase}, {"$addToSet" => {"users" => {
             "short_url" => data['url'],
             "screen_name" => tweet['user']['screen_name'],
             "user_id" => tweet['user']['id'],
             "status_id" => tweet['id'],
             "link" => "http://twitter.com/#!/#{tweet['user']['screen_name']}/status/#{tweet['id']}"
           }}}, :upsert => true)
-          DB['domains'].update({:domain => url.host}, {"$addToSet" => {"users" => {
+          DB['domains'].update({:domain => url.host.downcase}, {"$addToSet" => {"users" => {
             "short_url" => data['url'],
             "screen_name" => tweet['user']['screen_name'],
             "user_id" => tweet['user']['id'],
