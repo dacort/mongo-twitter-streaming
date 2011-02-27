@@ -80,36 +80,31 @@ def unshorten(tweet)
 end
 
 EM.schedule do
-  oauth_consumer = OAuth::Consumer.new(CONSUMER_KEY,CONSUMER_SECRET,:site => 'http://twitter.com')
-  oauth_access_token = OAuth::AccessToken.new(oauth_consumer,ACCESS_TOKEN,ACCESS_TOKEN_SECRET)
+  # oauth_consumer = OAuth::Consumer.new(CONSUMER_KEY,CONSUMER_SECRET,:site => 'http://twitter.com')
+  # oauth_access_token = OAuth::AccessToken.new(oauth_consumer,ACCESS_TOKEN,ACCESS_TOKEN_SECRET)
 
-  request = EM::HttpRequest.new(STREAMING_URL)
-  http = request.get(:head => {"User-Agent " => "Booya/1.2"}) do |client|
-    oauth_consumer.sign!(client,oauth_access_token)
-  end
-  buffer = ""
-  begin
-    http.stream do |chunk|
-      buffer += chunk
-      # puts "I got a chunk!"
-      puts "Buffer is currently #{buffer.inspect}"
-      while line = buffer.slice!(/.+\r?\n/)
-        puts line.inspect
-        next if line == "\r\n"
-        tweet = JSON.parse(line)
-        # puts tweet.inspect
-        next if tweet['entities'].nil?
-        unshorten(tweet) if !tweet['entities']['urls'].empty?
-      end
-    end
-  rescue Exception => e
-    puts "WTF HAPPENED?! #{e.inspect}"
+  stream = Twitter::JSONStream.connect(
+    :host    => 'userstream.twitter.com',
+    :path    => '/2/user.json',
+    :ssl     => true,
+    :oauth => {
+       :consumer_key    => CONSUMER_KEY,
+       :consumer_secret => CONSUMER_SECRET,
+       :access_key      => ACCESS_TOKEN,
+       :access_secret   => ACCESS_TOKEN_SECRET
+     }
+  )
+
+  stream.each_item do |item|
+    tweet = JSON.parse(item)
+    # puts tweet.inspect
+    next if tweet['entities'].nil?
+    unshorten(tweet) if !tweet['entities']['urls'].empty?
   end
 
-  http.callback {
-    puts "Hunh: #{http.response_header}"
-  }
-  http.errback { |err|
-    puts "IKILLYOU: #{http.inspect}"
-  }
+  stream.on_error do |message|
+    $stdout.print "error: #{message}\n"
+    $stdout.flush
+  end
+
 end
