@@ -53,7 +53,7 @@ def unshorten(tweet)
       http.callback {
 
         resp = JSON.parse(http.response)
-        if resp['success']
+        if resp['success'] == "true"
           url = URI.parse resp['resolvedURL']
           DB['urls'].update({:url => url.to_s}, {"$addToSet" => {"users" => {
             "short_url" => data['url'],
@@ -110,6 +110,6 @@ EM.schedule do
     puts "Hunh: #{http.response_header}"
   }
   http.errback { |err|
-    puts "IKILLYOU: #{err.inspect}"
+    puts "IKILLYOU: #{http.inspect}"
   }
 end
