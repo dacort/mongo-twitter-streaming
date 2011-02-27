@@ -27,6 +27,7 @@ end
 
 def unshorten(tweet)
   puts "Doing some shit with #{tweet['entities']['urls'].inspect}"
+  puts tweet.inspect
   tweet['entities']['urls'].each do |data|
     if data['expanded_url']
       url = URI.parse data['expanded_url']
