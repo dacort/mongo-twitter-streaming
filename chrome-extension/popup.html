@@ -1,0 +1,58 @@
+<html>
+<head>
+<style>
+body {
+  min-width:357px;
+  overflow-x:hidden;
+}
+
+img {
+  margin:5px;
+  border:2px solid black;
+  vertical-align:middle;
+  width:24px;
+  height:24px;
+}
+</style>
+
+<script>
+chrome.tabs.getSelected(null, function(tab) {
+  var req = new XMLHttpRequest();
+  req.open(
+      "GET",
+      "http://evening-winter-692.heroku.com/search?" + "url=" + tab.url,
+      true);
+  req.onload = showTweets;
+  req.send(null);
+
+  function showTweets() {
+    var resp = JSON.parse(req.responseText);
+    document.getElementById('status').innerHTML = "Found " + 
+      resp.length + " tweet" + (resp.length == 1 ? '' : 's') + "."
+
+    for (i=0;i<resp.length;i++) {
+      var link = document.createElement("a");
+      link.href = resp[i].link;  
+      link.addEventListener("click",new Function("clickHandler('"+link.href+"')"),false);
+
+      var img = document.createElement("image");
+      img.title = "@" + resp[i].screen_name;
+      img.src = "http://api.twitter.com/1/users/profile_image/" + resp[i].screen_name + "?size=mini";
+
+      link.appendChild(img);
+      document.getElementById('results').appendChild(link);
+    }
+  }
+});
+
+function clickHandler(str) {
+    chrome.tabs.create({ url: str });
+}
+</script>
+</head>
+<body>
+<p id="status">Loading ...</p>
+<hr />
+<p id="results"></ul>
+</body>
+</html>

@@ -1,0 +1,12 @@
+{
+  "name": "Who Tweeted That?",
+  "version": "1.0",
+  "description": "See which of your friends tweeted a link.",
+  "browser_action": {
+    "default_icon": "icon.png",
+    "popup": "popup.html"
+  },
+  "permissions": [
+    "tabs", "http://evening-winter-692.heroku.com/"
+  ]
+}
