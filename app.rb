@@ -15,8 +15,6 @@ configure do
   
   DB.create_collection("urls")
   DB.create_collection("domains")
-
-
 end
 
 get '/' do
@@ -26,12 +24,9 @@ get '/' do
 end
 
 def unshorten(tweet)
-  puts "Doing some shit with #{tweet['entities']['urls'].inspect}"
-  puts tweet.inspect
   tweet['entities']['urls'].each do |data|
     if data['expanded_url']
       url = URI.parse data['expanded_url']
-      puts "Inserting #{url.inspect}"
       DB['urls'].update({:url => url.to_s}, {"$addToSet" => {"users" => {
         "short_url" => data['url'],
         "screen_name" => tweet['user']['screen_name'],
@@ -39,7 +34,6 @@ def unshorten(tweet)
         "status_id" => tweet['id'],
         "link" => "http://twitter.com/#!/#{tweet['user']['screen_name']}/status/#{tweet['id']}"
       }}}, :upsert => true)
-      puts "url inserted"
       DB['domains'].update({:domain => url.host}, {"$addToSet" => {"users" => {
         "short_url" => data['url'],
         "screen_name" => tweet['user']['screen_name'],
@@ -47,7 +41,6 @@ def unshorten(tweet)
         "status_id" => tweet['id'],
         "link" => "http://twitter.com/#!/#{tweet['user']['screen_name']}/status/#{tweet['id']}"
       }}}, :upsert => true)
-      puts "domain inserted"
     else
       http = EventMachine::HttpRequest.new("http://api.unshort.me/?r=#{data['url']}&t=json").get
      
@@ -72,18 +65,11 @@ def unshorten(tweet)
           }}}, :upsert => true)
         end
       }
-
-      http.errback {
-        puts "Oh, this shit failed!"
-      }
     end
   end
 end
 
 EM.schedule do
-  # oauth_consumer = OAuth::Consumer.new(CONSUMER_KEY,CONSUMER_SECRET,:site => 'http://twitter.com')
-  # oauth_access_token = OAuth::AccessToken.new(oauth_consumer,ACCESS_TOKEN,ACCESS_TOKEN_SECRET)
-
   stream = Twitter::JSONStream.connect(
     :host    => 'userstream.twitter.com',
     :path    => '/2/user.json',
@@ -98,7 +84,6 @@ EM.schedule do
 
   stream.each_item do |item|
     tweet = JSON.parse(item)
-    # puts tweet.inspect
     next if tweet['entities'].nil?
     unshorten(tweet) if !tweet['entities']['urls'].empty?
   end
