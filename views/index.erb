@@ -1,6 +1,6 @@
 <% @tweets.each do |tweet| %>
   <p>
-    <strong><%= tweet['user']['screen_name'] %></strong>:
-    <%= tweet['text'] %>
+    <strong><%= tweet['url'] %></strong>:
+    <%= tweet['users'].collect{|t| "@<a href=\"#{t['link']}\">#{t['screen_name']}</a>"}.join(', ') %>
   </p>
 <% end %>

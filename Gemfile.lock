@@ -12,6 +12,7 @@ GEM
     json (1.4.6)
     mongo (1.0.8)
       bson (>= 1.0.5)
+    oauth (0.4.4)
     rack (1.2.1)
     sinatra (1.0)
       rack (>= 1.0)
@@ -28,5 +29,6 @@ DEPENDENCIES
   em-http-request
   json
   mongo
+  oauth
   sinatra
   thin
